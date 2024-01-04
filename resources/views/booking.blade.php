@@ -43,8 +43,11 @@
         <thead>
             <tr>
                 <th>Name</th>
+                <th>Email</th>
+                <th>Booking Type</th>
                 <th>Booking Date</th>
                 <th>Booking Time</th>
+                <th>Booking Slot</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -53,24 +56,22 @@
             @foreach($bookings as $booking)
             <tr>
                 <td>{{$booking->name}}</td>
+                <td><a href="mail:to{{ $booking->email}}">{{$booking->email}}</a></td>
+                <td>{{$booking->booking_type}}</td>
                 <td>{{$booking->booking_date}}</td>
                 <td>{{$booking->booking_time}}</td>
-                <td class="actions">
-                    <form method="GET" action="{{ route('bookings.show', $booking->id) }}">
-                        @csrf
-                        <button class="btn btn-primary" type="submit">View</button>
-                    </form>
-                    <form method="GET" action="{{ route('bookings.edit', $booking->id) }}">
-                        @csrf
-                       
-                        <button class="btn btn-primary" type="submit">Edit</button>
-                    </form>
+                <td>{{$booking->booking_slot}}</td>
+                <td>
+                <div class="btn-group" role="group" aria-label="Booking Actions">
+                    <a href="{{ route('bookings.show', $booking->id) }}" class="btn btn-primary">View</a>
+                    <a href="{{ route('bookings.edit', $booking->id) }}" class="btn btn-warning">Edit</a>
                     <form method="POST" action="{{ route('bookings.destroy', $booking->id) }}">
                         @csrf
                         @method('DELETE')
-                        <button class="btn btn-danger" type="submit">Delete</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
                     </form>
-                </td>
+                </div>
+            </td>
             </tr>
             @endforeach
             <!-- Add more rows as needed -->

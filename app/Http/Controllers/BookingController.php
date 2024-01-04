@@ -15,7 +15,7 @@ class BookingController extends Controller
      */
     public function index()
     {
-        $bookings = Booking::select('id', 'name', 'booking_date', 'booking_time')->get();
+        $bookings = Booking::get();
         return view('booking', compact('bookings'));
     }
 
@@ -43,7 +43,7 @@ class BookingController extends Controller
 
         $commonDates = $morning_dates->intersect($evening_dates);
         $booked_dates = $booking_dates->merge($commonDates);
-        return view('addbooking', compact('booked_dates'));
+        return view('addbooking', compact('booked_dates', 'morning_dates', 'evening_dates', 'booking_dates'));
     }
 
     /**
@@ -58,7 +58,7 @@ class BookingController extends Controller
 
         $booking = Booking::create($request->all());
 
-        return redirect()->back();
+        return redirect()->route('bookings.index');
     }
 
     /**
@@ -82,8 +82,24 @@ class BookingController extends Controller
     public function edit($id)
     {
         $booking = Booking::find($id);
-        $booking_dates = Booking::where('booking_date', '>=', now())->pluck('booking_date');
-        return view('editbooking', compact('booking', 'booking_dates'));
+        $booking_dates = Booking::where([
+            ['booking_date', '>=', now()],
+            ['booking_slot', 'FULL_DAY']
+        ])->pluck('booking_date');
+
+        $morning_dates = Booking::where([
+            ['booking_date', '>=', now()],
+            ['booking_slot', 'MORNING']
+        ])->pluck('booking_date');
+
+        $evening_dates = Booking::where([
+            ['booking_date', '>=', now()],
+            ['booking_slot', 'EVENING']
+        ])->pluck('booking_date');
+
+        $commonDates = $morning_dates->intersect($evening_dates);
+        $booked_dates = $booking_dates->merge($commonDates);
+        return view('editbooking', compact('booking', 'booked_dates','morning_dates', 'evening_dates', 'booking_dates'));
     }
 
     /**
@@ -102,6 +118,7 @@ class BookingController extends Controller
             'booking_type' => $request->booking_type,
             'booking_date' => $request->booking_date,
             'booking_time' => $request->booking_time,
+            'booking_slot' => $request->booking_slot
         ]);
 
         return redirect()->route('bookings.index');

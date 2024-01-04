@@ -106,46 +106,59 @@
     });
 
     $(document).on("change", "#booking_type,#booking_date", function(e) {
+
         $.ajax({
             url: '{{route("bookings.checkBooking")}}',
             type: "POST",
             dataType: "json",
             headers: {
-                        'X-CSRF-TOKEN': '{{csrf_token()}}'
-                    },
+                'X-CSRF-TOKEN': '{{csrf_token()}}'
+            },
             data: {
                 booking_date: $('#booking_date').val(),
             },
             success: function(successData) {
-                if(successData !== null){
-                    var bookingSlot = successData.booking_slot;
-                // Enable or disable options in Booking Slot based on Booking Slot value from success data
-                if (bookingSlot === 'MORNING') {
-                    $('#booking_slot option[value=MORNING]').prop('disabled', true);
-                    $('#booking_slot option[value=EVENING]').prop('selected', true);
-                } else if (bookingSlot === 'EVENING') {
-                    $('#booking_slot option[value=MORNING]').prop('selected', true);
-                    $('#booking_slot option[value=EVENING]').prop('disabled', true);
-                }
+                if (successData !== null) {
+                    var bookingSlot = successData.booking_slot;                                                            
+                    if (bookingSlot === 'MORNING') {
+                        $('#booking_slot option[value=MORNING]').prop('disabled', true);
+                        $('#booking_slot option[value=EVENING]').prop('selected', true);
+                    } else if (bookingSlot === 'EVENING') {
+                        $('#booking_slot option[value=MORNING]').prop('selected', true);
+                        $('#booking_slot option[value=EVENING]').prop('disabled', true);
+                    }
                 }
             },
         });
     });
 </script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    // document.addEventListener("DOMContentLoaded", function() {
+        // disableDates(booking_type);
+    // });
+
+    $('#booking_type').on('change', function(){        
+        disableDates();
+    });
+
+    function disableDates(booking_type = $('#booking_type').val()) {
+        $('#booking_date').val('');
         var today = new Date();
         var disabledDates = <?php echo json_encode($booked_dates); ?>;
+        if (booking_type == 'FULL_DAY') {
+            disabledDates = disabledDates.concat(<?php echo json_encode($morning_dates); ?>);
+            disabledDates = disabledDates.concat(<?php echo json_encode($evening_dates); ?>);
+            ddates = <?php echo json_encode($booking_dates); ?>
+        }
 
-        
         for (var date = new Date("2024-01-01"); date <= today; date.setDate(date.getDate() + 1)) {
             var formattedDate = date.toISOString().split('T')[0];
             if (!disabledDates.includes(formattedDate)) {
-                disabledDates.push(formattedDate);
+                disabledDates.push(formattedDate);                
             }
         }
         flatpickr("#booking_date", {
             disable: disabledDates,
         });
-    });
+    }
 </script>

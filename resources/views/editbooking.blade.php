@@ -15,7 +15,7 @@
 <body>
 
     <div class="container">
-        <h2>Create Booking</h2>
+        <h2>Edit Booking</h2>
 
         <form method="POST" action="{{ route('bookings.update', $booking->id) }}">
             @csrf
@@ -63,7 +63,7 @@
                 <input type="time" name="booking_time" class="form-control" value="{{ $booking->booking_time }}" required>
             </div>
 
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" class="btn btn-primary">Update</button>
         </form>
     </div>
 </body>
@@ -71,7 +71,7 @@
 </html>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
+<!-- <script>
     $(document).ready(function() {
 
         $('#booking_type').on('change', function() {
@@ -99,12 +99,12 @@
                 }));
 
                 bookingSlotSelect.append($('<option>', {
-                    value: 'Morning',
+                    value: 'MORNING',
                     text: 'Morning'
                 }));
 
                 bookingSlotSelect.append($('<option>', {
-                    value: 'Evening',
+                    value: 'EVENING',
                     text: 'Evening'
                 }));
             }
@@ -123,12 +123,15 @@
                 booking_date: $('#booking_date').val(),
             },
             success: function(successData) {
-                if (bookingSlot === 'MORNING') {
-                    $('#booking_slot option[value=MORNING]').prop('disabled', true);
-                    $('#booking_slot option[value=EVENING]').prop('selected', true);
-                } else if (bookingSlot === 'EVENING') {
-                    $('#booking_slot option[value=MORNING]').prop('selected', true);
-                    $('#booking_slot option[value=EVENING]').prop('disabled', true);
+                    if(successData !== null){
+                        var bookingSlot = successData.booking_slot;
+                    if (bookingSlot === 'MORNING') {
+                        $('#booking_slot option[value=MORNING]').prop('disabled', true);
+                        $('#booking_slot option[value=EVENING]').prop('selected', true);
+                    } else if (bookingSlot === 'EVENING') {
+                        $('#booking_slot option[value=MORNING]').prop('selected', true);
+                        $('#booking_slot option[value=EVENING]').prop('disabled', true);
+                    }
                 }
             },
         });
@@ -150,4 +153,101 @@
             disable: disabledDates,
         });
     });
+</script> -->
+
+<script>
+    $(document).ready(function() {
+
+        $('#booking_type').on('change', function() {
+            updateBookingSlotOptions();
+        });
+
+        function updateBookingSlotOptions() {
+            var bookingType = $('#booking_type').val();
+            var bookingSlotSelect = $('#booking_slot');
+
+            bookingSlotSelect.empty();
+
+            if (bookingType === 'FULL_DAY') {
+                bookingSlotSelect.append($('<option>', {
+                    value: 'FULL_DAY',
+                    text: 'Full Day',
+                    selected: true,
+                }));
+            } else {
+
+                bookingSlotSelect.append($('<option>', {
+                    value: '',
+                    text: '--Select Your Slot--'
+                }));
+
+                bookingSlotSelect.append($('<option>', {
+                    value: 'MORNING',
+                    text: 'Morning'
+                }));
+
+                bookingSlotSelect.append($('<option>', {
+                    value: 'EVENING',
+                    text: 'Evening'
+                }));
+            }
+        }
+    });
+
+    $(document).on("change", "#booking_type,#booking_date", function(e) {
+
+        $.ajax({
+            url: '{{route("bookings.checkBooking")}}',
+            type: "POST",
+            dataType: "json",
+            headers: {
+                'X-CSRF-TOKEN': '{{csrf_token()}}'
+            },
+            data: {
+                booking_date: $('#booking_date').val(),
+            },
+            success: function(successData) {
+                if (successData !== null) {
+                    var bookingSlot = successData.booking_slot;                                                            
+                    if (bookingSlot === 'MORNING') {
+                        $('#booking_slot option[value=MORNING]').prop('disabled', true);
+                        $('#booking_slot option[value=EVENING]').prop('selected', true);
+                    } else if (bookingSlot === 'EVENING') {
+                        $('#booking_slot option[value=MORNING]').prop('selected', true);
+                        $('#booking_slot option[value=EVENING]').prop('disabled', true);
+                    }
+                }
+            },
+        });
+    });
+</script>
+<script>
+    // document.addEventListener("DOMContentLoaded", function() {
+        // disableDates(booking_type);
+    // });
+
+    $('#booking_type').on('change', function(){        
+        disableDates();
+    });
+
+    function disableDates(booking_type = $('#booking_type').val()) {
+        $('#booking_date').val('');
+        var today = new Date();
+        var disabledDates = <?php echo json_encode($booked_dates); ?>;
+        if (booking_type == 'FULL_DAY') {
+            disabledDates = disabledDates.concat(<?php echo json_encode($morning_dates); ?>);
+            disabledDates = disabledDates.concat(<?php echo json_encode($evening_dates); ?>);
+            ddates = <?php echo json_encode($booking_dates); ?>
+        }
+
+        for (var date = new Date("2024-01-01"); date <= today; date.setDate(date.getDate() + 1)) {
+            var formattedDate = date.toISOString().split('T')[0];
+            if (!disabledDates.includes(formattedDate)) {
+                disabledDates.push(formattedDate);                
+            }
+        }
+        flatpickr("#booking_date", {
+            disable: disabledDates,
+        });
+    }
 </script>
